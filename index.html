@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Account</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f9;
+        }
+        .container {
+            text-align: center;
+            padding: 40px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 90%;
+        }
+        h1 {
+            color: #d32f2f; /* Red color for warning */
+        }
+        p {
+            color: #555;
+            line-height: 1.6;
+        }
+        input[type="email"] {
+            width: 100%;
+            padding: 12px;
+            margin: 20px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box; /* Important for padding */
+        }
+        button {
+            background-color: #d32f2f;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #b71c1c;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .message {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Delete Your Account</h1>
+        <p>
+            To permanently delete your account and all associated data,
+            please enter the email address you used to sign up.
+            This action cannot be undone.
+        </p>
+        <input type="email" id="emailInput" placeholder="Enter your email address">
+        <button id="deleteButton" onclick="requestDeletion()">Request Account Deletion</button>
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        async function requestDeletion() {
+            const emailInput = document.getElementById('emailInput');
+            const deleteButton = document.getElementById('deleteButton');
+            const messageDiv = document.getElementById('message');
+
+            const email = emailInput.value;
+
+            // Simple email validation
+            if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+                messageDiv.textContent = 'Please enter a valid email address.';
+                messageDiv.className = 'message error';
+                return;
+            }
+            
+            // --- 🚨 အရေးကြီး 🚨 ---
+            // ဒီနေရာမှာ သင့်ရဲ့ Firebase Cloud Function URL ကို အစားထိုးထည့်ပါ
+            // ဥပမာ- "https://us-central1-your-project-id.cloudfunctions.net/deleteUserAccount"
+            const cloudFunctionUrl = 'YOUR_CLOUD_FUNCTION_URL_HERE'; 
+
+            if (cloudFunctionUrl === 'YOUR_CLOUD_FUNCTION_URL_HERE') {
+                 messageDiv.textContent = 'Configuration error: Cloud Function URL is not set.';
+                 messageDiv.className = 'message error';
+                 return;
+            }
+
+
+            // Disable button to prevent multiple clicks
+            deleteButton.disabled = true;
+            deleteButton.textContent = 'Processing...';
+            messageDiv.textContent = '';
+
+            try {
+                const response = await fetch(cloudFunctionUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email: email }),
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    messageDiv.textContent = result.message || 'Deletion request sent successfully. Your account will be deleted shortly.';
+                    messageDiv.className = 'message success';
+                    emailInput.disabled = true;
+                    deleteButton.style.display = 'none'; // Hide button after success
+                } else {
+                    throw new Error(result.error || 'An unknown error occurred.');
+                }
+
+            } catch (error) {
+                messageDiv.textContent = `Error: ${error.message}`;
+                messageDiv.className = 'message error';
+                deleteButton.disabled = false; // Re-enable button on error
+                deleteButton.textContent = 'Request Account Deletion';
+            }
+        }
+    </script>
+</body>
+</html>
